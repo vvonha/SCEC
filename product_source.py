@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 USER_AGENT = "SCEC-Agent/1.0"
 WIKI_SECTION_KEYWORDS = ("사업", "제품", "서비스", "생산", "사업부", "라인업", "공급", "Solution")
+WIKI_LANGS = ("ko", "en", "ja", "zh")
 
 
 @dataclass
@@ -27,8 +28,8 @@ def _clean(text: str) -> str:
     return " ".join(text.split())
 
 
-def _wiki_summary(term: str) -> Optional[dict]:
-    url = f"https://ko.wikipedia.org/api/rest_v1/page/summary/{quote(term)}"
+def _wiki_summary(term: str, lang: str) -> Optional[dict]:
+    url = f"https://{lang}.wikipedia.org/api/rest_v1/page/summary/{quote(term)}"
     try:
         response = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=10)
         if response.status_code != 200:
@@ -39,8 +40,8 @@ def _wiki_summary(term: str) -> Optional[dict]:
         return None
 
 
-def _wiki_mobile_html(title: str) -> Optional[str]:
-    url = f"https://ko.wikipedia.org/api/rest_v1/page/mobile-html/{quote(title)}"
+def _wiki_mobile_html(title: str, lang: str) -> Optional[str]:
+    url = f"https://{lang}.wikipedia.org/api/rest_v1/page/mobile-html/{quote(title)}"
     try:
         response = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=10)
         if response.status_code != 200:
@@ -93,28 +94,29 @@ def _wiki_records(profile: CompanyProfile) -> List[ProductRecord]:
     if profile.query and profile.query not in candidates:
         candidates.append(profile.query)
     for candidate in candidates:
-        summary = _wiki_summary(candidate)
-        if not summary:
-            continue
-        title = summary.get("title") or candidate
-        html = _wiki_mobile_html(title)
-        if not html:
-            continue
-        entries = _extract_wiki_items(html)
-        if not entries:
-            continue
-        records: List[ProductRecord] = []
-        for entry in entries[:10]:
-            name, evidence = _summarize_item(entry)
-            records.append(
-                ProductRecord(
-                    name=name,
-                    source="Wikipedia",
-                    evidence=evidence,
+        for lang in WIKI_LANGS:
+            summary = _wiki_summary(candidate, lang)
+            if not summary:
+                continue
+            title = summary.get("title") or candidate
+            html = _wiki_mobile_html(title, lang)
+            if not html:
+                continue
+            entries = _extract_wiki_items(html)
+            if not entries:
+                continue
+            records: List[ProductRecord] = []
+            for entry in entries[:12]:
+                name, evidence = _summarize_item(entry)
+                records.append(
+                    ProductRecord(
+                        name=name,
+                        source=f"Wikipedia-{lang}",
+                        evidence=evidence,
+                    )
                 )
-            )
-        if records:
-            return records
+            if records:
+                return records
     return []
 
 

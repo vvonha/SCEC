@@ -29,7 +29,7 @@ def index():
 
         profile = lookup_company(company)
         if not profile:
-            error = "KRX/KIND 상장사 목록에서 기업을 찾지 못했습니다. 공식 명칭으로 다시 입력해 주세요."
+            error = "상장사 및 위키 문서를 찾지 못했습니다. 공식 명칭/영문명을 다시 입력해주세요."
             return render_template(
                 "index.html",
                 error=error,
@@ -45,6 +45,7 @@ def index():
             conflict_pairs=conflict_pairs,
             company_value=profile.official_name,
             length_value=length,
+            error=None,
         )
 
     return render_template(
@@ -52,6 +53,7 @@ def index():
         conflict_pairs=conflict_pairs,
         company_value="",
         length_value=10,
+        error=None,
     )
 
 

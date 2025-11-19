@@ -108,27 +108,88 @@ def fetch_bbc_headlines(limit: int = 25) -> List[str]:
     return headlines
 
 
+def fetch_reuters_headlines(limit: int = 25) -> List[str]:
+    url = "https://www.reuters.com/world/rss"
+    root = _get_xml(url)
+    if root is None:
+        return []
+    headlines: List[str] = []
+    for item in root.findall(".//item"):
+        title = item.findtext("title")
+        if title:
+            headlines.append(title)
+        if len(headlines) >= limit:
+            break
+    return headlines
+
+
+def fetch_ap_headlines(limit: int = 25) -> List[str]:
+    url = "https://apnews.com/hub/apf-intlnews?format=xml"
+    root = _get_xml(url)
+    if root is None:
+        return []
+    headlines: List[str] = []
+    for item in root.findall(".//item"):
+        title = item.findtext("title")
+        if title:
+            headlines.append(title)
+        if len(headlines) >= limit:
+            break
+    return headlines
+
+
+def fetch_aljazeera_headlines(limit: int = 25) -> List[str]:
+    url = "https://www.aljazeera.com/xml/rss/all.xml"
+    root = _get_xml(url)
+    if root is None:
+        return []
+    headlines: List[str] = []
+    for item in root.findall(".//item"):
+        title = item.findtext("title")
+        if title:
+            headlines.append(title)
+        if len(headlines) >= limit:
+            break
+    return headlines
+
+
+def fetch_yonhap_headlines(limit: int = 25) -> List[str]:
+    url = "https://en.yna.co.kr/RSS/news060601.xml"
+    root = _get_xml(url)
+    if root is None:
+        return []
+    headlines: List[str] = []
+    for item in root.findall(".//item"):
+        title = item.findtext("title")
+        if title:
+            headlines.append(title)
+        if len(headlines) >= limit:
+            break
+    return headlines
+
+
 def gather_conflict_pairs(max_pairs: int = 6) -> List[dict]:
     candidates: List[dict] = []
     seen_pairs = set()
 
-    for headline in fetch_reddit_headlines():
-        for entry in _headline_pairs(headline, "Reddit r/worldnews"):
-            if entry["pair"] in seen_pairs:
-                continue
-            candidates.append(entry)
-            seen_pairs.add(entry["pair"])
-            if len(candidates) >= max_pairs:
-                return candidates
+    feeds = [
+        (fetch_reddit_headlines, "Reddit r/worldnews"),
+        (fetch_bbc_headlines, "BBC World RSS"),
+        (fetch_reuters_headlines, "Reuters World"),
+        (fetch_ap_headlines, "AP International"),
+        (fetch_aljazeera_headlines, "Al Jazeera"),
+        (fetch_yonhap_headlines, "Yonhap News"),
+    ]
 
-    for headline in fetch_bbc_headlines():
-        for entry in _headline_pairs(headline, "BBC World RSS"):
-            if entry["pair"] in seen_pairs:
-                continue
-            candidates.append(entry)
-            seen_pairs.add(entry["pair"])
-            if len(candidates) >= max_pairs:
-                return candidates
+    for fetcher, label in feeds:
+        for headline in fetcher():
+            for entry in _headline_pairs(headline, label):
+                if entry["pair"] in seen_pairs:
+                    continue
+                candidates.append(entry)
+                seen_pairs.add(entry["pair"])
+                if len(candidates) >= max_pairs:
+                    return candidates
 
     if candidates:
         return candidates

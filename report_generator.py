@@ -5,6 +5,7 @@ from typing import Dict, Iterable, List, Set
 
 from company_profile import CompanyProfile
 from product_source import ProductRecord, gather_product_records
+from supply_chain import build_supply_chain_overlay
 
 
 @dataclass
@@ -22,6 +23,10 @@ class ProductInsight:
     sensitive_inputs: List[str]
     alternatives: List[str]
     note: str
+    imports: List[str]
+    exports: List[str]
+    logistics: List[str]
+    alerts: List[str]
 
 
 @dataclass
@@ -191,6 +196,7 @@ def _build_product_insights(records: Iterable[ProductRecord]) -> List[ProductIns
         if not record.name:
             continue
         entry = _match_product(f"{record.name} {record.evidence}")
+        overlay = build_supply_chain_overlay(entry["category"], record.evidence)
         insight = ProductInsight(
             name=record.name,
             description=record.evidence,
@@ -199,6 +205,10 @@ def _build_product_insights(records: Iterable[ProductRecord]) -> List[ProductIns
             sensitive_inputs=entry["inputs"],
             alternatives=entry["alternatives"],
             note=entry["note"],
+            imports=overlay.get("imports", []),
+            exports=overlay.get("exports", []),
+            logistics=overlay.get("logistics", []),
+            alerts=overlay.get("alerts", []),
         )
         insights.append(insight)
     if insights:
@@ -212,6 +222,10 @@ def _build_product_insights(records: Iterable[ProductRecord]) -> List[ProductIns
             sensitive_inputs=DEFAULT_PRODUCT["inputs"],
             alternatives=DEFAULT_PRODUCT["alternatives"],
             note=DEFAULT_PRODUCT["note"],
+            imports=["글로벌 원자재 스팟"],
+            exports=["주요 고객 다변화"],
+            logistics=["복합 운송"],
+            alerts=["전사적 환율/정책 리스크"],
         )
     ]
 
@@ -293,58 +307,61 @@ def build_report(profile: CompanyProfile, conflicts: List[dict], pages: int) -> 
     conflict_insights = [_conflict_risks(conflict, products) for conflict in sampled_conflicts]
     scores = _compute_scores(products, conflict_insights)
 
+    top_products = ", ".join(product.name for product in products[:3])
+    category_counts: Dict[str, int] = {}
+    for product in products:
+        category_counts[product.category] = category_counts.get(product.category, 0) + 1
+    sorted_categories = sorted(category_counts.items(), key=lambda x: x[1], reverse=True)
+    category_summary = ", ".join(f"{cat} {count}건" for cat, count in sorted_categories[:3])
+
+    risk_focus = []
+    for product in products[:3]:
+        if product.alerts:
+            risk_focus.append(f"{product.name}: {product.alerts[0]}")
+        else:
+            risk_focus.append(f"{product.name}: 글로벌 공급망 모니터링")
+
+    conflict_summary = []
+    for conflict in conflict_insights:
+        focus = ", ".join(conflict.matched_products[:2]) or "간접 영향"
+        conflict_summary.append(f"{conflict.pair} → {focus}")
+
+    alt_summary = []
+    for product in products[:3]:
+        alt_summary.append(f"{product.name}: {', '.join(product.alternatives[:3])}")
+
+    action_items = [
+        "조달 다변화: 수입선 상위 3곳과 가격/리드타임 재협상",
+        "분쟁 직접 타격 품목에 대해 최소 2곳의 세컨더리 공급사 가동 준비",
+        "물류 경로 리던던시 확보(해상+항공) 및 재고 커버리지 1.5배 확대",
+        "헤드라인 감지 시 자동 리포트/PDF 생성 후 이해관계자 공유",
+    ]
+
     sections = [
         Section(
-            "기업 개요",
+            "공급망 요약",
             [
-                f"공식 명칭: {profile.official_name} / 업종: {profile.industry}",
-                f"상장일 {profile.listing_date}, 결산월 {profile.fiscal_month}, 본사 지역 {profile.region}",
-                f"대표자: {profile.ceo} / 주요 제품: {', '.join(product.name for product in products[:3])}",
-                f"공식 홈페이지: {profile.website or '미등록'}",
+                f"{profile.official_name} ({profile.industry}) – 데이터 출처: {profile.source}",
+                f"주요 사업 지역: {profile.region} / 리포트 목표 {pages}p",
+                f"주요 품목: {top_products or '미확인'}",
+                f"카테고리 분포: {category_summary or '단일 품목'}",
             ],
         ),
         Section(
-            "데이터 파이프라인",
-            [
-                "KIND/KRX 공시 테이블을 실시간 수집해 공식 업종·주요제품·사업지 정보를 확보",
-                "Wikipedia REST API와 HTML 파서를 이용해 사업보고서의 제품/사업부 설명을 문장 단위로 추출",
-                "전자공시 원문과 뉴스 헤드라인을 함께 적재하여 품목-국가-리스크 3자 매핑을 구축",
-                "S3 혹은 로컬 캐시(.dart_cache)를 활용해 반복 호출 시 응답 시간을 단축",
-            ],
+            "위험 품목 우선순위",
+            risk_focus or ["가용 데이터 부족"],
         ),
         Section(
-            "LLM 분석 파이프라인",
-            [
-                "파싱된 제품 설명에서 2차전지/반도체/정밀화학 등 도메인 카테고리를 분류",
-                "중국·일본·미국 등 분쟁 국가 키워드를 정규화하여 제품별 리스크 태그를 연결",
-                "LangChain/RAG를 통해 사업보고서 문장과 무역 데이터, 뉴스 요약본을 QA 페이로드로 변환",
-                "Function Calling으로 제품-원자재-대체 공급처 구조를 JSON 스키마에 맞춰 적재",
-            ],
+            "분쟁 영향 매핑",
+            conflict_summary or ["최근 헤드라인과 직접 연계된 품목 없음"],
         ),
         Section(
-            "정량화 모델",
-            [
-                "의존도 지수: 분쟁과 직접 매칭된 품목 비중 + 핵심 투입재 복잡도를 가중",
-                "위험 품목 지수: 품목별 민감 소재 개수와 헤드라인 경보 횟수를 누적",
-                "대체 가능성: 대체 공급처 다양성과 지역 분산도를 계산하여 점수화",
-                "충격도: 단기(물류·관세)와 중기(투자·인증) 변수로 별도 스코어 산출",
-            ],
+            "대체 공급 전략",
+            alt_summary or ["대체 공급처 데이터 부족"],
         ),
         Section(
-            "PDF/리포트 구성",
-            [
-                "1) 기업 개요, 2) KIND+Wikipedia 제품 라인업, 3) 분쟁 영향 매핑",
-                "4) 단기·중기 리스크 히트맵, 5) 대체 공급처 로드맵, 6) 대응 우선순위",
-                "WeasyPrint/LaTeX 템플릿으로 그래프·테이블을 포함한 10p 보고서 자동 생성",
-            ],
-        ),
-        Section(
-            "확장 전략",
-            [
-                "중·일, 미·중, 러·EU, 중동 등 다수 분쟁을 동적 크롤링으로 확장",
-                "멀티테넌트 SaaS + API 모드(컨설팅/금융사 연계) 제공",
-                "경보형 웹훅, ERP/PLM 연계 커넥터 출시로 월 구독 모델 전환",
-            ],
+            "실행 권고",
+            action_items,
         ),
     ]
 
