@@ -42,7 +42,14 @@ def _split_products(text: str) -> List[str]:
 def _download_corp_table() -> List[dict]:
     response = requests.get(KIND_URL, timeout=20)
     response.raise_for_status()
-    response.encoding = "euc-kr"
+    # KIND switched to UTF-8 output in 2024 even though legacy docs still
+    # reference EUC-KR. For safety we follow the server-provided encoding and
+    # only fall back to requests' chardet guess when it is missing.
+    encoding = response.encoding or response.apparent_encoding or "utf-8"
+    try:
+        response.encoding = encoding
+    except LookupError:
+        response.encoding = "utf-8"
     soup = BeautifulSoup(response.text, "html.parser")
     rows = soup.select("table.list tbody tr")
     records: List[dict] = []
