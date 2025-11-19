@@ -10,7 +10,7 @@
 <div class="page">
     <header class="hero">
         <div>
-            <p class="eyebrow">KIND · Wikipedia · Reddit · BBC · Reuters · AP · Al Jazeera · Yonhap · Guardian · DW</p>
+            <p class="eyebrow">KIND · Wikipedia · Reddit · BBC · Reuters · AP · Al Jazeera · Yonhap · Guardian · DW · NYT · VOA · CNN · NPR · Sky · NHK</p>
             <h1>실시간 공급망 분쟁 리포트</h1>
             <p>
                 기업명만 입력하면 전자공시/위키에서 제품·서비스를 추출하고,
@@ -31,7 +31,7 @@
 
                 <p class="note">
                     상장사는 KIND, 비상장·해외 기업은 Wikipedia로 자동 매칭합니다.
-                    분쟁 국가는 Reddit/BBC/Reuters/AP/Al Jazeera/Yonhap 헤드라인을 실시간 분석하여 노출됩니다.
+                    분쟁 국가는 Reddit/BBC/Reuters/AP/Al Jazeera/Yonhap/Guardian/DW/NYT/VOA/CNN/NPR/Sky/NHK 헤드라인과 상시 지정학 라이브러리를 조합해 감지합니다.
                 </p>
 
                 <button type="submit">리포트 생성</button>
@@ -119,7 +119,7 @@
                 <div class="panel-header">
                     <div>
                         <h2>품목별 위험도 & 공급망 추적</h2>
-                        <p>전자공시/위키 문장을 그대로 근거로 사용합니다.</p>
+                        <p>전자공시/위키 근거에 실명 공급사·대체 제조사 정보를 결합했습니다.</p>
                     </div>
                 </div>
                 <div class="product-grid">
@@ -166,6 +166,24 @@
                                     <h4>경보</h4>
                                     <ul>
                                         {% for item in product.alerts %}
+                                            <li>{{ item }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="partner-trails">
+                                <div>
+                                    <h4>실제 공급선</h4>
+                                    <ul>
+                                        {% for item in product.supplier_companies %}
+                                            <li>{{ item }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4>대체 제조사</h4>
+                                    <ul>
+                                        {% for item in product.alternative_companies %}
                                             <li>{{ item }}</li>
                                         {% endfor %}
                                     </ul>
@@ -314,7 +332,7 @@
     </main>
 
     <footer>
-        <p>데이터 출처: KIND/KRX, Wikipedia REST API, Reddit r/worldnews, BBC, Reuters, AP, Al Jazeera, Yonhap, The Guardian, Deutsche Welle 등 공개 RSS. 본 페이지는 참고용이며 실제 계약·투자는 별도 검증 후 진행하십시오.</p>
+        <p>데이터 출처: KIND/KRX, Wikipedia REST API, Reddit r/worldnews, BBC, Reuters, AP, Al Jazeera, Yonhap, The Guardian, Deutsche Welle, New York Times, VOA, CNN, NPR, Sky News, NHK 등 공개 RSS와 지정학 시나리오 라이브러리. 본 페이지는 참고용이며 실제 계약·투자는 별도 검증 후 진행하십시오.</p>
     </footer>
 </div>
 </body>

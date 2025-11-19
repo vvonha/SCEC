@@ -198,7 +198,131 @@ def fetch_dw_headlines(limit: int = 25) -> List[str]:
     return headlines
 
 
-def gather_conflict_pairs(max_pairs: int = 6) -> List[dict]:
+def fetch_nyt_headlines(limit: int = 25) -> List[str]:
+    url = "https://rss.nytimes.com/services/xml/rss/nyt/World.xml"
+    root = _get_xml(url)
+    if root is None:
+        return []
+    headlines: List[str] = []
+    for item in root.findall(".//item"):
+        title = item.findtext("title")
+        if title:
+            headlines.append(title)
+        if len(headlines) >= limit:
+            break
+    return headlines
+
+
+def fetch_voa_headlines(limit: int = 25) -> List[str]:
+    url = "https://www.voanews.com/rss"
+    root = _get_xml(url)
+    if root is None:
+        return []
+    headlines: List[str] = []
+    for item in root.findall(".//item"):
+        title = item.findtext("title")
+        if title:
+            headlines.append(title)
+        if len(headlines) >= limit:
+            break
+    return headlines
+
+
+def fetch_cnn_headlines(limit: int = 25) -> List[str]:
+    url = "https://rss.cnn.com/rss/edition_world.rss"
+    root = _get_xml(url)
+    if root is None:
+        return []
+    headlines: List[str] = []
+    for item in root.findall(".//item"):
+        title = item.findtext("title")
+        if title:
+            headlines.append(title)
+        if len(headlines) >= limit:
+            break
+    return headlines
+
+
+def fetch_npr_headlines(limit: int = 25) -> List[str]:
+    url = "https://www.npr.org/rss/rss.php?id=1004"
+    root = _get_xml(url)
+    if root is None:
+        return []
+    headlines: List[str] = []
+    for item in root.findall(".//item"):
+        title = item.findtext("title")
+        if title:
+            headlines.append(title)
+        if len(headlines) >= limit:
+            break
+    return headlines
+
+
+def fetch_sky_headlines(limit: int = 25) -> List[str]:
+    url = "https://feeds.skynews.com/feeds/rss/world.xml"
+    root = _get_xml(url)
+    if root is None:
+        return []
+    headlines: List[str] = []
+    for item in root.findall(".//item"):
+        title = item.findtext("title")
+        if title:
+            headlines.append(title)
+        if len(headlines) >= limit:
+            break
+    return headlines
+
+
+def fetch_nhk_headlines(limit: int = 25) -> List[str]:
+    url = "https://www3.nhk.or.jp/rss/news/cat0.xml"
+    root = _get_xml(url)
+    if root is None:
+        return []
+    headlines: List[str] = []
+    for item in root.findall(".//item"):
+        title = item.findtext("title")
+        if title:
+            headlines.append(title)
+        if len(headlines) >= limit:
+            break
+    return headlines
+
+
+CURATED_CONFLICTS: List[dict] = [
+    {
+        "pair": "중국–대만",
+        "source": "지정학 라이브러리",
+        "headline": "대만해협 군사훈련으로 파운드리·서플라이 체인 차질 위험이 상시 존재합니다.",
+    },
+    {
+        "pair": "중국–일본",
+        "source": "지정학 라이브러리",
+        "headline": "희토류/정밀부품 수출 허가 이슈로 한중일 제조업에 영향.",
+    },
+    {
+        "pair": "미국–중국",
+        "source": "지정학 라이브러리",
+        "headline": "첨단 반도체 및 AI 칩 수출 통제가 확대되고 있습니다.",
+    },
+    {
+        "pair": "러시아–우크라이나",
+        "source": "지정학 라이브러리",
+        "headline": "전쟁 장기화로 에너지·곡물·네온가스 공급 제약이 지속됩니다.",
+    },
+    {
+        "pair": "이스라엘–팔레스타인",
+        "source": "지정학 라이브러리",
+        "headline": "가자지구 충돌이 중동 물류와 석유/가스 공급망에 파급.",
+    },
+    {
+        "pair": "인도–중국",
+        "source": "지정학 라이브러리",
+        "headline": "히말라야 국경 마찰과 희토류/배터리 원료 경쟁이 격화.",
+    },
+]
+
+
+def gather_conflict_pairs(max_pairs: int = 8) -> List[dict]:
     candidates: List[dict] = []
     seen_pairs = set()
 
@@ -211,6 +335,12 @@ def gather_conflict_pairs(max_pairs: int = 6) -> List[dict]:
         (fetch_yonhap_headlines, "Yonhap News"),
         (fetch_guardian_headlines, "The Guardian"),
         (fetch_dw_headlines, "Deutsche Welle"),
+        (fetch_nyt_headlines, "New York Times World"),
+        (fetch_voa_headlines, "VOA World"),
+        (fetch_cnn_headlines, "CNN World"),
+        (fetch_npr_headlines, "NPR World"),
+        (fetch_sky_headlines, "Sky News World"),
+        (fetch_nhk_headlines, "NHK World"),
     ]
 
     for fetcher, label in feeds:
@@ -221,15 +351,19 @@ def gather_conflict_pairs(max_pairs: int = 6) -> List[dict]:
                 candidates.append(entry)
                 seen_pairs.add(entry["pair"])
                 if len(candidates) >= max_pairs:
-                    return candidates
+                    break
+        if len(candidates) >= max_pairs:
+            break
+
+    for entry in CURATED_CONFLICTS:
+        if len(candidates) >= max_pairs:
+            break
+        if entry["pair"] in seen_pairs:
+            continue
+        candidates.append(entry)
+        seen_pairs.add(entry["pair"])
 
     if candidates:
-        return candidates
+        return candidates[:max_pairs]
 
-    return [
-        {
-            "pair": "중국–일본",
-            "source": "Fallback",
-            "headline": "네트워크 오류로 최신 데이터를 가져오지 못했습니다.",
-        }
-    ]
+    return CURATED_CONFLICTS[:max_pairs]

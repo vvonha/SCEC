@@ -280,6 +280,25 @@ button:hover {
     font-size: 0.9rem;
 }
 
+.partner-trails {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.partner-trails h4 {
+    margin: 0 0 0.35rem;
+    font-size: 0.95rem;
+}
+
+.partner-trails ul {
+    margin: 0;
+    padding-left: 1rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
 .conflict-risk article {
     border: 1px solid var(--border);
     border-radius: 18px;

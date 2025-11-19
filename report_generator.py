@@ -7,6 +7,7 @@ from company_profile import CompanyProfile
 from product_source import ProductRecord, gather_product_records
 from supplier_network import PartnerRecord, map_supply_network
 from supply_chain import build_supply_chain_overlay
+from supply_directory import lookup_category_directory
 
 
 @dataclass
@@ -28,6 +29,8 @@ class ProductInsight:
     exports: List[str]
     logistics: List[str]
     alerts: List[str]
+    supplier_companies: List[str]
+    alternative_companies: List[str]
 
 
 @dataclass
@@ -207,6 +210,15 @@ def _build_product_insights(records: Iterable[ProductRecord]) -> List[ProductIns
             continue
         entry = _match_product(f"{record.name} {record.evidence}")
         overlay = build_supply_chain_overlay(entry["category"], record.evidence)
+        directory = lookup_category_directory(entry["category"])
+        overlay["logistics"].extend(directory.get("routes", []))
+        overlay["alerts"].extend(directory.get("alerts", []))
+        for key in ("imports", "exports", "logistics", "alerts"):
+            unique = []
+            for item in overlay.get(key, []):
+                if item not in unique:
+                    unique.append(item)
+            overlay[key] = unique
         insight = ProductInsight(
             name=record.name,
             description=record.evidence,
@@ -219,6 +231,8 @@ def _build_product_insights(records: Iterable[ProductRecord]) -> List[ProductIns
             exports=overlay.get("exports", []),
             logistics=overlay.get("logistics", []),
             alerts=overlay.get("alerts", []),
+            supplier_companies=list(directory.get("suppliers", [])),
+            alternative_companies=list(directory.get("alternatives", [])),
         )
         insights.append(insight)
     if insights:
@@ -236,8 +250,47 @@ def _build_product_insights(records: Iterable[ProductRecord]) -> List[ProductIns
             exports=["주요 고객 다변화"],
             logistics=["복합 운송"],
             alerts=["전사적 환율/정책 리스크"],
+            supplier_companies=["지역별 공급사 조사 필요"],
+            alternative_companies=["동일 산업 대체 제조사 탐색"],
         )
     ]
+
+
+def _format_partner(node: PartnerRecord) -> str:
+    note = _shorten(node.note, 80)
+    country = node.country or "국가 미확인"
+    return f"{node.name}({country}) – {note}" if note else f"{node.name}({country})"
+
+
+def _attach_partner_examples(products: List[ProductInsight], network: dict) -> None:
+    for product in products:
+        tokens = {product.name.lower()}
+        tokens.add(product.category.lower())
+        supplier_hits: List[str] = []
+        for node in network["suppliers"]:
+            haystack = f"{node.name} {node.note}".lower()
+            if any(token and token in haystack for token in tokens):
+                supplier_hits.append(_format_partner(node))
+        if not supplier_hits:
+            supplier_hits = [_format_partner(node) for node in network["suppliers"][:2]]
+        if supplier_hits:
+            merged = supplier_hits + [item for item in product.supplier_companies if item not in supplier_hits]
+            product.supplier_companies = merged[:5]
+        else:
+            product.supplier_companies = product.supplier_companies[:5]
+
+        alt_hits: List[str] = []
+        for node in network["alternatives"]:
+            haystack = f"{node.name} {node.note}".lower()
+            if any(token and token in haystack for token in tokens):
+                alt_hits.append(_format_partner(node))
+        if not alt_hits:
+            alt_hits = [_format_partner(node) for node in network["alternatives"][:2]]
+        if alt_hits:
+            merged_alt = alt_hits + [item for item in product.alternative_companies if item not in alt_hits]
+            product.alternative_companies = merged_alt[:5]
+        else:
+            product.alternative_companies = product.alternative_companies[:5]
 
 
 def _conflict_risks(conflict: dict, products: List[ProductInsight]) -> ConflictInsight:
@@ -312,6 +365,7 @@ def build_report(profile: CompanyProfile, conflicts: List[dict], pages: int) -> 
     records = gather_product_records(profile)
     products = _build_product_insights(records)
     network = map_supply_network(profile, records)
+    _attach_partner_examples(products, network)
     sampled_conflicts = conflicts[:3] if conflicts else [
         {"pair": "중국–일본", "source": "Fallback", "headline": "최근 데이터를 불러오지 못했습니다."}
     ]
@@ -334,10 +388,9 @@ def build_report(profile: CompanyProfile, conflicts: List[dict], pages: int) -> 
 
     risk_focus = []
     for product in products[:3]:
-        if product.alerts:
-            risk_focus.append(f"{product.name}: {product.alerts[0]}")
-        else:
-            risk_focus.append(f"{product.name}: 글로벌 공급망 모니터링")
+        alert = product.alerts[0] if product.alerts else "글로벌 공급망 모니터링"
+        supplier = product.supplier_companies[0] if product.supplier_companies else "공급선 미확보"
+        risk_focus.append(f"{product.name}: {alert} / 핵심 공급선 {supplier}")
 
     conflict_summary = []
     for conflict in conflict_insights:
@@ -346,7 +399,10 @@ def build_report(profile: CompanyProfile, conflicts: List[dict], pages: int) -> 
 
     alt_summary = []
     for product in products[:3]:
-        alt_summary.append(f"{product.name}: {', '.join(product.alternatives[:3])}")
+        if product.alternative_companies:
+            alt_summary.append(f"{product.name}: {product.alternative_companies[0]}")
+        else:
+            alt_summary.append(f"{product.name}: {', '.join(product.alternatives[:3])}")
 
     action_items = [
         "조달 다변화: 실명 파트너 기준 우선순위 재조정 및 가격/리드타임 재협상",
