@@ -14,6 +14,34 @@ logger = logging.getLogger(__name__)
 
 USER_AGENT = "SCEC-Agent/1.0"
 WIKI_SECTION_KEYWORDS = ("사업", "제품", "서비스", "생산", "사업부", "라인업", "공급", "Solution")
+POSITIVE_ENTRY_KEYWORDS = (
+    "제품",
+    "서비스",
+    "solution",
+    "platform",
+    "라인",
+    "series",
+    "사업부",
+    "브랜드",
+    "device",
+    "module",
+    "component",
+    "chip",
+    "sensor",
+    "display",
+    "battery",
+    "vehicle",
+    "ship",
+    "engine",
+    "화학",
+    "소재",
+    "장비",
+    "system",
+    "export",
+    "supply",
+    "제조",
+)
+NEGATIVE_ENTRY_KEYWORDS = ("본사", "사옥", "사업장", "캠퍼스", "공장", "연구소", "본점", "지점", "주소")
 WIKI_LANGS = ("ko", "en", "ja", "zh")
 
 
@@ -65,6 +93,11 @@ def _extract_wiki_items(html: str) -> List[str]:
         for li in section.find_all("li"):
             text = _clean(li.get_text(" ", strip=True))
             if len(text) < 5 or len(text) > 160:
+                continue
+            lowered = text.lower()
+            if any(ex in lowered for ex in NEGATIVE_ENTRY_KEYWORDS):
+                continue
+            if not any(token in lowered for token in POSITIVE_ENTRY_KEYWORDS):
                 continue
             if text in items:
                 continue

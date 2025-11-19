@@ -7,6 +7,7 @@ from xml.etree import ElementTree
 import requests
 
 logger = logging.getLogger(__name__)
+USER_AGENT = "SCEC-Agent/1.0"
 
 COUNTRY_KEYWORDS: Dict[str, Sequence[str]] = {
     "중국": ("china", "chinese", "beijing", "prc"),
@@ -48,9 +49,9 @@ def _get_json(url: str, headers: Dict[str, str]) -> Dict:
         return {}
 
 
-def _get_xml(url: str) -> ElementTree.Element | None:
+def _get_xml(url: str, headers: Dict[str, str] | None = None) -> ElementTree.Element | None:
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, headers=headers or {"User-Agent": USER_AGENT}, timeout=10)
         response.raise_for_status()
         return ElementTree.fromstring(response.content)
     except Exception as exc:  # pragma: no cover
@@ -83,7 +84,7 @@ def _headline_pairs(headline: str, source: str) -> List[dict]:
 
 def fetch_reddit_headlines(limit: int = 25) -> List[str]:
     url = "https://www.reddit.com/r/worldnews/.json"
-    payload = _get_json(url, headers={"User-Agent": "SCEC-Agent/1.0"})
+    payload = _get_json(url, headers={"User-Agent": USER_AGENT})
     headlines: List[str] = []
     children = payload.get("data", {}).get("children", [])
     for child in children[:limit]:
@@ -109,7 +110,7 @@ def fetch_bbc_headlines(limit: int = 25) -> List[str]:
 
 
 def fetch_reuters_headlines(limit: int = 25) -> List[str]:
-    url = "https://www.reuters.com/world/rss"
+    url = "https://feeds.reuters.com/reuters/worldNews"
     root = _get_xml(url)
     if root is None:
         return []
@@ -124,7 +125,7 @@ def fetch_reuters_headlines(limit: int = 25) -> List[str]:
 
 
 def fetch_ap_headlines(limit: int = 25) -> List[str]:
-    url = "https://apnews.com/hub/apf-intlnews?format=xml"
+    url = "https://apnews.com/hub/international-news?format=xml"
     root = _get_xml(url)
     if root is None:
         return []
@@ -153,8 +154,8 @@ def fetch_aljazeera_headlines(limit: int = 25) -> List[str]:
     return headlines
 
 
-def fetch_yonhap_headlines(limit: int = 25) -> List[str]:
-    url = "https://en.yna.co.kr/RSS/news060601.xml"
+def fetch_koreatimes_headlines(limit: int = 25) -> List[str]:
+    url = "https://www.koreatimes.co.kr/www/rss/rss.xml?section=world"
     root = _get_xml(url)
     if root is None:
         return []
@@ -322,6 +323,51 @@ CURATED_CONFLICTS: List[dict] = [
 ]
 
 
+def fetch_scmp_headlines(limit: int = 25) -> List[str]:
+    url = "https://www.scmp.com/rss/91/feed"
+    root = _get_xml(url)
+    if root is None:
+        return []
+    headlines: List[str] = []
+    for item in root.findall(".//item"):
+        title = item.findtext("title")
+        if title:
+            headlines.append(title)
+        if len(headlines) >= limit:
+            break
+    return headlines
+
+
+def fetch_straits_times_headlines(limit: int = 25) -> List[str]:
+    url = "https://www.straitstimes.com/global/rss.xml"
+    root = _get_xml(url)
+    if root is None:
+        return []
+    headlines: List[str] = []
+    for item in root.findall(".//item"):
+        title = item.findtext("title")
+        if title:
+            headlines.append(title)
+        if len(headlines) >= limit:
+            break
+    return headlines
+
+
+def fetch_al_monitor_headlines(limit: int = 25) -> List[str]:
+    url = "https://www.al-monitor.com/rss.xml"
+    root = _get_xml(url)
+    if root is None:
+        return []
+    headlines: List[str] = []
+    for item in root.findall(".//item"):
+        title = item.findtext("title")
+        if title:
+            headlines.append(title)
+        if len(headlines) >= limit:
+            break
+    return headlines
+
+
 def gather_conflict_pairs(max_pairs: int = 8) -> List[dict]:
     candidates: List[dict] = []
     seen_pairs = set()
@@ -332,7 +378,7 @@ def gather_conflict_pairs(max_pairs: int = 8) -> List[dict]:
         (fetch_reuters_headlines, "Reuters World"),
         (fetch_ap_headlines, "AP International"),
         (fetch_aljazeera_headlines, "Al Jazeera"),
-        (fetch_yonhap_headlines, "Yonhap News"),
+        (fetch_koreatimes_headlines, "Korea Times"),
         (fetch_guardian_headlines, "The Guardian"),
         (fetch_dw_headlines, "Deutsche Welle"),
         (fetch_nyt_headlines, "New York Times World"),
@@ -341,6 +387,9 @@ def gather_conflict_pairs(max_pairs: int = 8) -> List[dict]:
         (fetch_npr_headlines, "NPR World"),
         (fetch_sky_headlines, "Sky News World"),
         (fetch_nhk_headlines, "NHK World"),
+        (fetch_scmp_headlines, "SCMP Asia"),
+        (fetch_straits_times_headlines, "Straits Times"),
+        (fetch_al_monitor_headlines, "Al-Monitor"),
     ]
 
     for fetcher, label in feeds:

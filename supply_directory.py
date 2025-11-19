@@ -26,6 +26,29 @@ CATEGORY_SUPPLY_DIRECTORY: Dict[str, dict] = {
             "미·중 첨단 칩 수출통제, 일본 포토레지스트 라이선스",
         ],
     },
+    "스마트폰/가전": {
+        "suppliers": [
+            "Qualcomm (미국) – Snapdragon/모뎀 칩셋",
+            "Sony Semiconductor (일본) – 이미지센서",
+            "Corning (미국) – 유리/커버 글래스",
+            "LG Display (한국) – OLED/LCD 패널",
+            "BOE (중국) – OLED 패널",
+        ],
+        "alternatives": [
+            "MediaTek (대만) – Dimensity SoC",
+            "Pegatron (대만) – EMS",
+            "Flextronics (말레이시아) – EMS",
+            "Wistron (인도) – 조립",
+        ],
+        "routes": [
+            "선전/상하이 → 인천 항공/해상 혼합",
+            "하노이/박닌 → 김포/인천 전자 화물",
+            "폴란드 브로츠와프 → 유럽 내륙 물류",
+        ],
+        "alerts": [
+            "미국·일본 대중 수출 규제, 중국 ODM 생산 제한",
+        ],
+    },
     "배터리/전지": {
         "suppliers": [
             "Albemarle (미국) – 리튬 정제",
@@ -111,6 +134,93 @@ CATEGORY_SUPPLY_DIRECTORY: Dict[str, dict] = {
         ],
         "alerts": [
             "미·중 기술 분쟁, 데이터 현지화 규제",
+        ],
+    },
+    "조선/해양": {
+        "suppliers": [
+            "POSCO (한국) – 고망간 후판",
+            "Nippon Steel (일본) – 극후판",
+            "MAN Energy Solutions (독일) – 메인 엔진",
+            "Wärtsilä (핀란드) – 발전 모듈",
+            "Linde (독일) – LNG 연료 시스템",
+        ],
+        "alternatives": [
+            "Hyundai Heavy Industries Vietnam – 블록 제작",
+            "Keppel Offshore (싱가포르) – 해양 구조물",
+            "Fincantieri (이탈리아) – 특수선",
+            "Saudi Aramco JV (사우디) – 해양 기자재",
+        ],
+        "routes": [
+            "포항 → 울산 조선소 내륙 운송",
+            "나고야 → 거제 해상 벌크",
+            "함부르크 → 울산 프로젝트 화물",
+        ],
+        "alerts": [
+            "홍해·걸프 해상 리스크, 러-우 전쟁발 가스 설비 지연",
+        ],
+    },
+    "에너지/정유": {
+        "suppliers": [
+            "Saudi Aramco (사우디) – 원유 장기계약",
+            "ADNOC (UAE) – 경질 원유",
+            "QatarEnergy (카타르) – LNG",
+            "GE Vernova (미국) – 터빈",
+        ],
+        "alternatives": [
+            "Occidental (미국) – 원유",
+            "Petrobras (브라질) – 원유",
+            "Equinor (노르웨이) – LNG",
+            "Siemens Energy (독일) – 발전 기자재",
+        ],
+        "routes": [
+            "라스탄누라 → 울산 원유선",
+            "카타르 → 평택 LNG선",
+            "휴스턴 → 여수 벌크",
+        ],
+        "alerts": [
+            "OPEC+ 감산, 호르무즈 해협 긴장, IRA 탄소 규제",
+        ],
+    },
+    "식품/소비재": {
+        "suppliers": [
+            "Cargill (미국) – 옥수수/대두",
+            "Wilmar (싱가포르) – 팜유",
+            "Givaudan (스위스) – 향료",
+            "Symrise (독일) – 향료/첨가제",
+        ],
+        "alternatives": [
+            "Louis Dreyfus (네덜란드) – 곡물",
+            "Barry Callebaut (스위스) – 카카오",
+            "CJ제일제당 베트남 – 가공",
+        ],
+        "routes": [
+            "브라질 산투스 → 부산 벌크",
+            "조호르 → 인천 냉장 컨테이너",
+            "로테르담 → 평택 컨테이너",
+        ],
+        "alerts": [
+            "곡물 수출 제한, 팜유 수출세, 위생 규제",
+        ],
+    },
+    "물류/상사": {
+        "suppliers": [
+            "Maersk (덴마크) – 해상 운송",
+            "MSC (스위스) – 컨테이너",
+            "DHL Supply Chain (독일) – 3PL",
+            "CJ대한통운 (한국) – 아시아 SCM",
+        ],
+        "alternatives": [
+            "DP World (UAE) – 항만/물류",
+            "PSA Singapore – 환적",
+            "Yang Ming (대만) – 컨테이너",
+        ],
+        "routes": [
+            "부산 ↔ 로테르담 주간 컨테이너",
+            "싱가포르 ↔ 부산 환적",
+            "인천 ↔ LA 항공+해상 복합",
+        ],
+        "alerts": [
+            "컨테이너 운임 변동, 항만 파업, 해상보험 증액",
         ],
     },
 }
