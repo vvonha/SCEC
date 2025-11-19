@@ -168,6 +168,36 @@ def fetch_yonhap_headlines(limit: int = 25) -> List[str]:
     return headlines
 
 
+def fetch_guardian_headlines(limit: int = 25) -> List[str]:
+    url = "https://www.theguardian.com/world/rss"
+    root = _get_xml(url)
+    if root is None:
+        return []
+    headlines: List[str] = []
+    for item in root.findall(".//item"):
+        title = item.findtext("title")
+        if title:
+            headlines.append(title)
+        if len(headlines) >= limit:
+            break
+    return headlines
+
+
+def fetch_dw_headlines(limit: int = 25) -> List[str]:
+    url = "https://rss.dw.com/rdf/rss-en-all"
+    root = _get_xml(url)
+    if root is None:
+        return []
+    headlines: List[str] = []
+    for item in root.findall(".//item"):
+        title = item.findtext("title")
+        if title:
+            headlines.append(title)
+        if len(headlines) >= limit:
+            break
+    return headlines
+
+
 def gather_conflict_pairs(max_pairs: int = 6) -> List[dict]:
     candidates: List[dict] = []
     seen_pairs = set()
@@ -179,6 +209,8 @@ def gather_conflict_pairs(max_pairs: int = 6) -> List[dict]:
         (fetch_ap_headlines, "AP International"),
         (fetch_aljazeera_headlines, "Al Jazeera"),
         (fetch_yonhap_headlines, "Yonhap News"),
+        (fetch_guardian_headlines, "The Guardian"),
+        (fetch_dw_headlines, "Deutsche Welle"),
     ]
 
     for fetcher, label in feeds:

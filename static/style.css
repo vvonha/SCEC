@@ -20,6 +20,7 @@ body {
     font-family: 'Pretendard', 'Noto Sans KR', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: linear-gradient(135deg, #e0f2fe, #fef9c3);
     color: var(--text);
+    min-height: 100vh;
 }
 
 .page {
@@ -104,7 +105,10 @@ button:hover {
     box-shadow: 0 15px 30px rgba(37, 99, 235, 0.35);
 }
 
-.note {
+.note,
+.evidence,
+.partner-card p,
+.lanes li {
     font-size: 0.9rem;
     color: var(--muted);
 }
@@ -319,6 +323,45 @@ button:hover {
     color: var(--muted);
 }
 
+.partner-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.1rem;
+}
+
+.partner-grid article {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.1rem;
+    background: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.partner-grid header {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.lanes {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0.75rem;
+}
+
+.lanes li {
+    background: #f1f5f9;
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
 footer {
     text-align: center;
     color: var(--muted);
@@ -343,5 +386,10 @@ footer {
 
     button {
         width: 100%;
+    }
+
+    .partner-grid header {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }

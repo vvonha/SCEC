@@ -5,6 +5,7 @@ from typing import Dict, Iterable, List, Set
 
 from company_profile import CompanyProfile
 from product_source import ProductRecord, gather_product_records
+from supplier_network import PartnerRecord, map_supply_network
 from supply_chain import build_supply_chain_overlay
 
 
@@ -45,6 +46,9 @@ class Report:
     page_goal: int
     product_insights: List[ProductInsight]
     conflict_insights: List[ConflictInsight]
+    supply_partners: List[PartnerRecord]
+    alternative_partners: List[PartnerRecord]
+    supply_lanes: List[str]
     sections: List[Section]
     scores: Dict[str, int]
 
@@ -182,6 +186,12 @@ COUNTRY_RISK_LIBRARY: Dict[str, dict] = {
 }
 
 
+def _shorten(text: str, limit: int = 90) -> str:
+    if len(text) <= limit:
+        return text
+    return text[: limit - 1] + "…"
+
+
 def _match_product(text: str) -> dict:
     normalized = text.lower()
     for entry in PRODUCT_LIBRARY:
@@ -301,11 +311,19 @@ def _compute_scores(products: List[ProductInsight], conflicts: List[ConflictInsi
 def build_report(profile: CompanyProfile, conflicts: List[dict], pages: int) -> Report:
     records = gather_product_records(profile)
     products = _build_product_insights(records)
+    network = map_supply_network(profile, records)
     sampled_conflicts = conflicts[:3] if conflicts else [
         {"pair": "중국–일본", "source": "Fallback", "headline": "최근 데이터를 불러오지 못했습니다."}
     ]
     conflict_insights = [_conflict_risks(conflict, products) for conflict in sampled_conflicts]
     scores = _compute_scores(products, conflict_insights)
+
+    supplier_highlights = [
+        f"{node.name}({node.country or '국가 미확인'}): {_shorten(node.note)}" for node in network["suppliers"]
+    ]
+    alternative_highlights = [
+        f"{node.name}({node.country or '국가 미확인'}): {_shorten(node.note)}" for node in network["alternatives"]
+    ]
 
     top_products = ", ".join(product.name for product in products[:3])
     category_counts: Dict[str, int] = {}
@@ -331,11 +349,15 @@ def build_report(profile: CompanyProfile, conflicts: List[dict], pages: int) -> 
         alt_summary.append(f"{product.name}: {', '.join(product.alternatives[:3])}")
 
     action_items = [
-        "조달 다변화: 수입선 상위 3곳과 가격/리드타임 재협상",
+        "조달 다변화: 실명 파트너 기준 우선순위 재조정 및 가격/리드타임 재협상",
         "분쟁 직접 타격 품목에 대해 최소 2곳의 세컨더리 공급사 가동 준비",
         "물류 경로 리던던시 확보(해상+항공) 및 재고 커버리지 1.5배 확대",
         "헤드라인 감지 시 자동 리포트/PDF 생성 후 이해관계자 공유",
     ]
+    if network["suppliers"]:
+        action_items.insert(0, f"핵심 공급사 {network['suppliers'][0].name}와(과) 비상 시나리오 협상")
+    if network["alternatives"]:
+        action_items.append(f"대체 공급선 1순위: {network['alternatives'][0].name} 온보딩")
 
     sections = [
         Section(
@@ -360,6 +382,18 @@ def build_report(profile: CompanyProfile, conflicts: List[dict], pages: int) -> 
             alt_summary or ["대체 공급처 데이터 부족"],
         ),
         Section(
+            "실제 공급 파트너",
+            supplier_highlights[:4] or ["위키/뉴스 기반 공급사 데이터를 확보하지 못했습니다."],
+        ),
+        Section(
+            "대안 공급 기업",
+            alternative_highlights[:4] or ["동일 산업 대체 기업 정보 부족"],
+        ),
+        Section(
+            "주요 운송/조달 경로",
+            network["lanes"] or ["실명 공급사가 확보되면 운송 경로를 노출합니다."],
+        ),
+        Section(
             "실행 권고",
             action_items,
         ),
@@ -370,6 +404,9 @@ def build_report(profile: CompanyProfile, conflicts: List[dict], pages: int) -> 
         page_goal=pages,
         product_insights=products,
         conflict_insights=conflict_insights,
+        supply_partners=network["suppliers"],
+        alternative_partners=network["alternatives"],
+        supply_lanes=network["lanes"],
         sections=sections,
         scores=scores,
     )

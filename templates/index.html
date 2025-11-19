@@ -10,7 +10,7 @@
 <div class="page">
     <header class="hero">
         <div>
-            <p class="eyebrow">KIND · Wikipedia · Reddit · BBC · Reuters · AP · Al Jazeera · Yonhap</p>
+            <p class="eyebrow">KIND · Wikipedia · Reddit · BBC · Reuters · AP · Al Jazeera · Yonhap · Guardian · DW</p>
             <h1>실시간 공급망 분쟁 리포트</h1>
             <p>
                 기업명만 입력하면 전자공시/위키에서 제품·서비스를 추출하고,
@@ -176,6 +176,82 @@
                 </div>
             </section>
 
+            <section class="panel partner-card">
+                <div class="panel-header">
+                    <div>
+                        <h2>실명 공급 파트너</h2>
+                        <p>위키/뉴스에서 추출한 공급업체·ODM·파운드리 정보를 노출합니다.</p>
+                    </div>
+                </div>
+                {% if report.supply_partners %}
+                    <div class="partner-grid">
+                        {% for partner in report.supply_partners %}
+                            <article>
+                                <header>
+                                    <div>
+                                        <h3>{{ partner.name }}</h3>
+                                        <p class="tag">{{ partner.country or '국가 미확인' }} · {{ partner.source }}</p>
+                                    </div>
+                                    {% if partner.url %}
+                                        <a class="link" href="{{ partner.url }}" target="_blank">원문</a>
+                                    {% endif %}
+                                </header>
+                                <p>{{ partner.note }}</p>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="error">뉴스/위키 검색에서 공급 파트너를 찾지 못했습니다.</div>
+                {% endif %}
+            </section>
+
+            <section class="panel partner-card">
+                <div class="panel-header">
+                    <div>
+                        <h2>대체 공급 기업 후보</h2>
+                        <p>동일 품목을 제조하는 글로벌 기업을 자동 탐색해 제시합니다.</p>
+                    </div>
+                </div>
+                {% if report.alternative_partners %}
+                    <div class="partner-grid">
+                        {% for partner in report.alternative_partners %}
+                            <article>
+                                <header>
+                                    <div>
+                                        <h3>{{ partner.name }}</h3>
+                                        <p class="tag">{{ partner.country or '국가 미확인' }} · {{ partner.source }}</p>
+                                    </div>
+                                    {% if partner.url %}
+                                        <a class="link" href="{{ partner.url }}" target="_blank">원문</a>
+                                    {% endif %}
+                                </header>
+                                <p>{{ partner.note }}</p>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="error">동일 품목 제조 기업을 찾지 못했습니다.</div>
+                {% endif %}
+            </section>
+
+            <section class="panel lanes-card">
+                <div class="panel-header">
+                    <div>
+                        <h2>운송·조달 경로</h2>
+                        <p>실명 공급사를 기준으로 자동 계산한 우선 모니터링 루트입니다.</p>
+                    </div>
+                </div>
+                <ul class="lanes">
+                    {% if report.supply_lanes %}
+                        {% for lane in report.supply_lanes %}
+                            <li>{{ lane }}</li>
+                        {% endfor %}
+                    {% else %}
+                        <li>실시간 공급사 확보 시 경로가 업데이트됩니다.</li>
+                    {% endif %}
+                </ul>
+            </section>
+
             <section class="panel conflict-risk">
                 <div class="panel-header">
                     <div>
@@ -238,7 +314,7 @@
     </main>
 
     <footer>
-        <p>데이터 출처: KIND/KRX, Wikipedia REST, Reddit, BBC, Reuters, AP, Al Jazeera, Yonhap. API 키 없이 기본 기능 사용 가능하며, DART·LLM 키는 환경변수로 추후 연동 가능합니다.</p>
+        <p>데이터 출처: KIND/KRX, Wikipedia REST API, Reddit r/worldnews, BBC, Reuters, AP, Al Jazeera, Yonhap, The Guardian, Deutsche Welle 등 공개 RSS. 본 페이지는 참고용이며 실제 계약·투자는 별도 검증 후 진행하십시오.</p>
     </footer>
 </div>
 </body>
