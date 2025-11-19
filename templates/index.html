@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <title>공급망 분쟁 리스크 스캐너</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+<header>
+    <h1>공급망 분쟁 리스크 스캐너</h1>
+    <p>기업명만 입력하면 Reddit/BBC 등에서 수집한 최신 분쟁 국가쌍을 자동으로 매칭해 리포트를 생성합니다.</p>
+</header>
+<main>
+    <form method="post">
+        <label for="company">기업명</label>
+        <input type="text" name="company" id="company" placeholder="예: ABC 반도체" value="{{ company_value }}" required />
+
+        <label for="length">리포트 길이 (페이지)</label>
+        <input type="number" name="length" id="length" value="{{ length_value }}" min="5" max="30" />
+
+        <div class="conflict-feed">
+            <h2>실시간 분쟁 국가쌍 후보</h2>
+            <p class="note">레딧 r/worldnews 및 BBC World RSS에서 추출한 헤드라인 기반 추천입니다.</p>
+            {% if conflict_pairs %}
+                <div class="pair-grid">
+                    {% for item in conflict_pairs %}
+                        <label class="pair-card">
+                            <input type="radio" name="conflict" value="{{ item.pair }}" {% if item.pair == selected_conflict %}checked{% endif %} />
+                            <div class="pair-name">{{ item.pair }}</div>
+                            <div class="pair-meta">{{ item.source }}</div>
+                            <p>{{ item.headline }}</p>
+                        </label>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="error">실시간 데이터 수집에 실패하여 기본 분쟁 시나리오(중국–일본)를 사용합니다.</div>
+            {% endif %}
+        </div>
+
+        <button type="submit">리포트 생성</button>
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+    </form>
+
+    {% if report %}
+        <section class="report-card">
+            <h2>{{ report.company }} – {{ report.conflict }} 리스크 리포트 (목표 {{ report.page_goal }}p)</h2>
+            <div class="score-grid">
+                {% for key, value in report.scores.items() %}
+                    <div class="score">
+                        <strong>{{ key }}</strong>
+                        <div>{{ value }} / 100</div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            {% for section in report.sections %}
+                <div class="section">
+                    <h3>{{ section.title }}</h3>
+                    <ul>
+                        {% for bullet in section.bullets %}
+                            <li>{{ bullet }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endfor %}
+        </section>
+    {% endif %}
+</main>
+</body>
+</html>

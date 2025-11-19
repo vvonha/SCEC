@@ -1,0 +1,151 @@
+:root {
+    --bg: #f7f9fb;
+    --card: #ffffff;
+    --accent: #1d4ed8;
+    --text: #0f172a;
+}
+
+body {
+    font-family: 'Noto Sans KR', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-color: var(--bg);
+    margin: 0;
+    color: var(--text);
+}
+
+header {
+    background: var(--card);
+    padding: 2rem;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+}
+
+main {
+    max-width: 960px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+form {
+    background: var(--card);
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    margin-bottom: 2rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+input, select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #cbd5f5;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+button {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.conflict-feed {
+    margin: 1rem 0 2rem;
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.conflict-feed h2 {
+    margin-top: 0;
+}
+
+.note {
+    font-size: 0.9rem;
+    color: #475569;
+    margin-bottom: 1rem;
+}
+
+.pair-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.pair-card {
+    border: 1px solid #cbd5f5;
+    border-radius: 10px;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    cursor: pointer;
+    background: white;
+}
+
+.pair-card input {
+    width: auto;
+    margin: 0;
+}
+
+.pair-card p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #475569;
+}
+
+.pair-name {
+    font-weight: 700;
+}
+
+.pair-meta {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.report-card {
+    background: var(--card);
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(15, 23, 42, 0.05);
+    margin-bottom: 1.5rem;
+}
+
+.score-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+}
+
+.score {
+    background: #eef2ff;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.section {
+    margin-top: 1.5rem;
+}
+
+.section h3 {
+    margin-bottom: 0.5rem;
+}
+
+.section ul {
+    padding-left: 1.25rem;
+}
+
+.error {
+    color: #b91c1c;
+    margin-top: 1rem;
+    font-weight: bold;
+}
